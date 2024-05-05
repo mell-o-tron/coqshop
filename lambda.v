@@ -1,16 +1,19 @@
 Require Import Arith.
 
+(* lambda expressions with De Bruijn indices *)
 Inductive exp : Type := 
     | Apply : exp -> exp -> exp
     | Lambda : exp -> exp
     | Index : nat -> exp.
 
+(* Substitution function *)
 Fixpoint subst t1 t2 i := match t1 with 
     | Apply e1 e2 => Apply(subst e1 t2 i) (subst e2 t2 i)
     | Lambda e =>  Lambda (subst e t2 (i+1))
     | Index j => if Nat.eqb i j then t2 else Index(j)
 end.
 
+(* beta_reduction step *)
 Fixpoint beta_red t := match t with 
     | Apply (Lambda(t1)) t2 => subst t1 t2 0
     | Apply t1 t2 => Apply (beta_red t1) (beta_red t2)
@@ -18,6 +21,7 @@ Fixpoint beta_red t := match t with
     | t1 => t1
 end.
 
+(* iterated beta_reduction *)
 Fixpoint beta_red_n t n := match n with
     | 0 => t
     | S m => beta_red_n (beta_red t) (m)
@@ -84,6 +88,8 @@ Fixpoint count_s t := match t with
     | _ => None
 end.
 
+(* transforms lambda terms to naturals (or None if not right form) *)
+
 Definition lambda_to_num t := match t with 
     | Lambda(Lambda(t1)) => count_s t1
     | _ => None
@@ -91,6 +97,7 @@ end.
 
 Compute lambda_to_num (beta_red_n(Apply(Apply(sum four)) (four)) 40).
 
+(* transforms naturals to lambda terms *)
 Fixpoint num_to_s n := match n with
     | 0 => Index 0
     | S n1 => Apply (Index 1) (num_to_s n1)
@@ -120,6 +127,7 @@ Proof.
     reflexivity.
 Qed.
 
+(* reduction as a relation *)
 
 Inductive red_step : exp -> exp -> Prop := 
     | red_beta : forall t1 t2 : exp , red_step (Apply (Lambda(t1)) t2)  (subst t1 t2 0)
@@ -130,7 +138,8 @@ Inductive red_step : exp -> exp -> Prop :=
     | red_lambda : forall t t' , red_step t t' 
         -> red_step (Lambda t) (Lambda t').
 
-
+(* closure of relation under equivalence relation properties *)
+        
 Inductive eq_clos (R : exp -> exp -> Prop) : (exp -> exp -> Prop) :=
     | eq_id   : forall e1 e2 : exp , 
         R e1 e2 -> eq_clos R e1 e2

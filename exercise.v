@@ -59,6 +59,8 @@ Proof.
         reflexivity.
 Qed.
 
+(* Now it's your turn! *)
+
 Theorem plus_n_Sm : forall n m : my_nat,
   S (n .+ m) = n .+ (S m).
 Proof.
